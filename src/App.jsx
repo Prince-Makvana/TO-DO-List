@@ -10,6 +10,7 @@ function App() {
   const [todo, setTodo] = useState("")
   const [todos, setTodos] = useState([])
   const [showFinished, setshowFinished] = useState(true)
+  const [editId, setEditId] = useState(null);
 
   useEffect(() => {
     let todoString = localStorage.getItem("todos")
@@ -27,15 +28,21 @@ function App() {
     setshowFinished(!showFinished)
   }
 
+  // const handleEdit = (e, id) => {
+  //   let t = todos.filter(i => i.id === id)
+  //   setTodo(t[0].todo)
+  //   let newTodos = todos.filter(item => {
+  //     return item.id !== id
+  //   })
+  //   setTodos(newTodos)
+  //   saveToLS()
+  // }
+
   const handleEdit = (e, id) => {
-    let t = todos.filter(i => i.id === id)
-    setTodo(t[0].todo)
-    let newTodos = todos.filter(item => {
-      return item.id !== id
-    })
-    setTodos(newTodos)
-    saveToLS()
-  }
+    let t = todos.find(i => i.id === id);
+    setTodo(t.todo);
+    setEditId(id); // Track that we are editing this ID
+  }  
 
   const handleDelete = (e, id) => {
     let newTodos = todos.filter(item => {
@@ -45,11 +52,32 @@ function App() {
     saveToLS()
   }
 
+  // const handleAdd = () => {
+  //   setTodos([...todos, { id: uuidv4(), todo, isCompleted: false }])
+  //   setTodo("")
+  //   saveToLS()
+  // }
+
   const handleAdd = () => {
-    setTodos([...todos, { id: uuidv4(), todo, isCompleted: false }])
-    setTodo("")
-    saveToLS()
-  }
+    if (editId) {
+      // Edit mode
+      let newTodos = todos.map(item => {
+        if (item.id === editId) {
+          return { ...item, todo };
+        }
+        return item;
+      });
+      setTodos(newTodos);
+      saveToLS(newTodos);
+      setEditId(null); // Reset edit mode
+    } else {
+      // Add mode
+      const newTodos = [...todos, { id: uuidv4(), todo, isCompleted: false }];
+      setTodos(newTodos);
+      saveToLS(newTodos);
+    }
+    setTodo(""); // Clear input after save
+  }  
 
   const handleChange = (e) => {
     setTodo(e.target.value)
@@ -75,7 +103,15 @@ function App() {
           <h2 className="text-xl font-bold">Add Todo</h2>
           <div className="flex">
             <input onChange={handleChange} value={todo} type='text' className='w-full rounded-full px-5 py-1' />
-            <button onClick={handleAdd} disabled={todo.length < 3} className='bg-green-600 mx-2 rounded-full hover:bg-green-900 disabled:bg-gray-400 p-4 py-2 text-sm font-bold text-white'>Save</button>
+            {/* <button onClick={handleAdd} disabled={todo.length < 3} className='bg-green-600 mx-2 rounded-full hover:bg-green-900 disabled:bg-gray-400 p-4 py-2 text-sm font-bold text-white'>Save</button> */}
+            <button
+              onClick={handleAdd}
+              disabled={todo.length < 3}
+              className='bg-green-600 mx-2 rounded-full hover:bg-green-900 disabled:bg-gray-400 p-4 py-2 text-sm font-bold text-white'
+            >
+              {editId ? "Update" : "Save"}
+            </button>
+
           </div>
         </div>
         <input className='my-4' id='show' onChange={toggleFinished} type='checkbox' checked={showFinished} />
